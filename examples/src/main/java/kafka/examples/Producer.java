@@ -44,23 +44,28 @@ public class Producer extends Thread {
 
   @Override
   public void run() {
+    //偏移量
     int messageNo = 1;
     while (true) {
       String messageStr = "Message_" + messageNo;
       long startTime = System.currentTimeMillis();
+      ProducerRecord producerRecord = new ProducerRecord<>(topic, messageNo, messageStr);
       if (isAsync) {
         // Send asynchronously。异步发送
+        // 提供一个回调，调用 send后可以继续发送消息而不用等待 。 当有结果运回时，会向动执行回调函数
         DemoCallBack callBack = new DemoCallBack(startTime, messageNo, messageStr);
-        producer.send(new ProducerRecord<>(topic, messageNo, messageStr), callBack);
+        producer.send(producerRecord, callBack);
       } else {
         // Send synchronously。同步发送
         try {
-          producer.send(new ProducerRecord<>(topic, messageNo, messageStr)).get();
+          //  需要立即调用get，因为Future.get在没有返回结果时会一直阻塞
+          producer.send(producerRecord).get();
           System.out.println("Sent message: (" + messageNo + ", " + messageStr + ")");
         } catch (InterruptedException | ExecutionException e) {
           e.printStackTrace();
         }
       }
+      // 偏移量递增
       ++messageNo;
     }
   }
@@ -84,6 +89,8 @@ class DemoCallBack implements Callback {
    * be called when the record sent to the server has been acknowledged. Exactly one of the
    * arguments will be
    * non-null.
+   * <p>
+   * 完成后所做的后续操作
    *
    * @param metadata  The metadata for the record that was sent (i.e. the partition and offset).
    *                  Null if an error
