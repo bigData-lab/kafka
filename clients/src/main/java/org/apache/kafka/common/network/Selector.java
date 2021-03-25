@@ -79,6 +79,7 @@ import org.slf4j.LoggerFactory;
  * various getters. These are reset by each call to <code>poll()</code>.
  *
  * This class is not thread safe!
+ * 处理网络连接和读写处理
  */
 public class Selector implements Selectable, AutoCloseable {
 
